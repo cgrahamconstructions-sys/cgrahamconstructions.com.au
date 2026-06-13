@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://cgrahamconstructions.com.au/sitemap.xml
