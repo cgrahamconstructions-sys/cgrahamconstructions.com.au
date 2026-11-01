@@ -1,0 +1,44 @@
+# Base44 sandbox/dev environment for the C Graham Constructions static site.
+#
+# The repo is a plain static website (no build step, no package manager, no
+# database). nginx serves the bind-mounted checkout directly, so any edit to a
+# file in the repo is live on the next page reload — nothing is baked into the
+# image and no rebuild is ever needed.
+#
+#   docker compose -f docker-compose.base44.yml up -d
+#   open http://localhost:3000/
+#
+# No secrets are required: the only external calls the pages make are public
+# (Google Fonts, GTM, base44.app-hosted images, and the chatbot's public
+# `captureWebsiteLead` function URL, which needs no key from this repo).
+
+name: cgraham-website
+
+services:
+  web:
+    image: nginx:alpine
+    restart: on-failure
+    ports:
+      - "3000:80"
+    # Only the public site paths are mounted. The checkout root itself is 0700,
+    # which nginx's worker user cannot traverse, and this keeps .git out of the
+    # served tree. Add a new top-level page/file here to serve it.
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./store.html:/usr/share/nginx/html/store.html:ro
+      - ./404.html:/usr/share/nginx/html/404.html:ro
+      - ./chatbot.js:/usr/share/nginx/html/chatbot.js:ro
+      - ./robots.txt:/usr/share/nginx/html/robots.txt:ro
+      - ./sitemap.xml:/usr/share/nginx/html/sitemap.xml:ro
+      - ./CNAME:/usr/share/nginx/html/CNAME:ro
+      - ./store:/usr/share/nginx/html/store:ro
+    labels:
+      base44.project: "C Graham Constructions Website"
+      base44.kind: "web"
+      base44.port: "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/index.html || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
